@@ -1,3 +1,4 @@
+
 package om.tanish.saas.tenant;
 
 import org.springframework.data.jpa.repository.JpaRepository;

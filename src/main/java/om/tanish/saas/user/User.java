@@ -1,3 +1,4 @@
+
 package om.tanish.saas.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
