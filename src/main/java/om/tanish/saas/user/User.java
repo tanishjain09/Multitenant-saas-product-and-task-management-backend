@@ -4,6 +4,8 @@ package om.tanish.saas.user;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import om.tanish.saas.tenant.Tenant;
 
 import java.time.Instant;
@@ -45,6 +47,14 @@ public class User {
     @Column(nullable = false)
     private Instant createdAt;
 
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
     public Tenant getTenant() {
         return tenant;
     }
@@ -58,7 +68,7 @@ public class User {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = email != null ? email.trim().toLowerCase() : null;
     }
 
     public String getUsername() {
@@ -81,8 +91,12 @@ public class User {
         return role;
     }
 
-    public void setRole(UserRole role) {
-        this.role = role;
+    public void setRole(String role) {
+        try {
+            this.role = UserRole.valueOf(role.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid role: " + role);
+        }
     }
 
     public Instant getCreatedAt() {

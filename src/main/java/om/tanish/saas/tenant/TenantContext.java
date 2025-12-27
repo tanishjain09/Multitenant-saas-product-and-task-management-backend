@@ -1,18 +1,20 @@
 
 package om.tanish.saas.tenant;
 
-public class TenantContext {
-    private static final ThreadLocal<String> currentTenant = new ThreadLocal<>();
+import java.util.UUID;
 
-    public static void setTenant(String tenantId) {
-        currentTenant.set(tenantId);
+public class TenantContext {
+    private static final ThreadLocal<UUID> TENANT_ID = new ThreadLocal<>();
+
+    public static void setTenant(UUID tenantId) {
+        TENANT_ID.set(tenantId);
     }
 
-    public static String getTenant() {
-        return currentTenant.get();
+    public static UUID getTenant() {
+        return TENANT_ID.get();
     }
 
     public static void clear() {
-        currentTenant.remove();
+        TENANT_ID.remove();
     }
 }

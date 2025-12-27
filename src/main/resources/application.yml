@@ -17,6 +17,10 @@ spring:
       hibernate:
         format_sql: true
 
+jwt:
+  secret: super-secret-key-1234567890
+  expiration: 86400000
+
   h2:
     console:
       enabled: true

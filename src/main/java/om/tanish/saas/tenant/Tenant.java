@@ -1,6 +1,8 @@
 package om.tanish.saas.tenant;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.time.Instant;
@@ -12,14 +14,18 @@ import java.util.UUID;
         uniqueConstraints = {@UniqueConstraint(columnNames = "tenant_key")})
 public class Tenant {
 
-
     @Id
     @GeneratedValue
     private UUID id;
 
     @Column(name = "tenant_key", nullable = false, updatable = false)
+    @NotBlank
+    @Size(min = 3, max = 50)
     private String tenantKey;
+
     @Column(nullable = false)
+    @NotBlank
+    @Size(min = 3, max = 100)
     private String name;
 
     @Enumerated(EnumType.STRING)
@@ -28,7 +34,6 @@ public class Tenant {
 
     @Column(nullable = false)
     private Instant createdAt;
-
 
     public UUID getId() {
         return id;
