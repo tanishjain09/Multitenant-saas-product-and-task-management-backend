@@ -1,12 +1,12 @@
 package om.tanish.saas.common;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.util.UUID;
 
+@Entity
+@Table(name = "refresh_tokens")
 class RefreshToken {
     @Id
     @GeneratedValue

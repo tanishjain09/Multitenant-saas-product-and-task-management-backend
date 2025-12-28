@@ -1,4 +1,4 @@
-package om.tanish.saas.project;
+package om.tanish.saas.project.service;
 
 import jakarta.transaction.Transactional;
 import om.tanish.saas.project.dto.CreateProjectRequest;
@@ -83,7 +83,7 @@ public class ProjectService {
 
     public Page<Project> getAllProjects(Pageable pageable) {
         UUID tenantId = getTenantIdFromContext();
-        return projectRepository.findAllByTenant_Id(tenantId);
+        return projectRepository.findAllByTenant_Id(tenantId, pageable);
     }
 
     public Project getProjectById(UUID projectId) {
@@ -160,5 +160,19 @@ public class ProjectService {
             );
         }
         return tenantId;
+    }
+
+    public Page<Project> filterProjects(ProjectStatus status, UUID ownerId, Pageable pageable) {
+        UUID tenantId = getTenantIdFromContext();
+
+        if (status != null && ownerId != null) {
+            return projectRepository.findAllByTenant_IdAndStatusAndOwner_Id(
+                    tenantId, status, ownerId, pageable);
+        } else if (status != null) {
+            return projectRepository.findAllByTenant_IdAndStatus(tenantId, status, pageable);
+        } else if (ownerId != null) {
+            return projectRepository.findAllByTenant_IdAndOwner_Id(tenantId, ownerId, pageable);
+        }
+        return projectRepository.findAllByTenant_Id(tenantId, pageable);
     }
 }

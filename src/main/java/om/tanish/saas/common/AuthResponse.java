@@ -9,7 +9,6 @@ public class AuthResponse {
     public AuthResponse(String accessToken, String refreshToken) {
         this.accessToken = accessToken;
         this.tokenType = "Bearer";
-        this.tokenType = "Bearer";
         this.expiresIn = 3600;
     }
 

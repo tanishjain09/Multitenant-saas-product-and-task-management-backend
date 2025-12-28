@@ -1,10 +1,10 @@
 package om.tanish.saas.project.controller;
 
 import jakarta.validation.Valid;
-import om.tanish.saas.project.ProjectService;
 import om.tanish.saas.project.dto.CreateProjectRequest;
 import om.tanish.saas.project.entities.Project;
 import om.tanish.saas.project.enums.ProjectStatus;
+import om.tanish.saas.project.service.ProjectService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,7 +34,7 @@ public class ProjectController {
 
     @GetMapping("/all")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
-    public Page<Project> getALlProjects(
+    public List<Project> getALlProjects(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -44,7 +44,7 @@ public class ProjectController {
                 ? Sort.Direction.ASC
                 : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        return projectService.getAllProjects(pageable);
+        return (List<Project>) projectService.getAllProjects(pageable);
     }
 
     @GetMapping("/filter")
