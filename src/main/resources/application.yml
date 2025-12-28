@@ -18,7 +18,7 @@ spring:
         format_sql: true
 
 jwt:
-  secret: super-secret-key-1234567890
+  secret: your-256-bit-secret-your-256-bit-secret-your-256-bit-secret!!
   expiration: 86400000
 
   h2:

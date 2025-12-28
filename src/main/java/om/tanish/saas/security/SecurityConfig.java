@@ -1,6 +1,6 @@
 package om.tanish.saas.security;
 
-import om.tanish.saas.tenant.JwtTenantFilter;
+import om.tanish.saas.config.JwtTenantFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -51,10 +51,10 @@ public class SecurityConfig {
                         .frameOptions(frame -> frame.disable())
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/user/create", "/user/new").permitAll()
-                        .requestMatchers("/tenant/create").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/user/create", "/api/v1/user/new").permitAll()
+                        .requestMatchers("/api/v1/tenant/create").permitAll()
+                        .requestMatchers("/api/v1/h2-console/**").permitAll()
                         .requestMatchers("/ping").permitAll()
                         .anyRequest().authenticated()
                 )

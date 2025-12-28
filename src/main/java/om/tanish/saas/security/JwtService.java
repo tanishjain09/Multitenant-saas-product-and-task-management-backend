@@ -1,4 +1,4 @@
-package om.tanish.saas.config;
+package om.tanish.saas.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

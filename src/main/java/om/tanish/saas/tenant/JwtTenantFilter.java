@@ -1,4 +1,4 @@
-package om.tanish.saas.tenant;
+package om.tanish.saas.config;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -7,7 +7,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import om.tanish.saas.config.JwtService;
+import om.tanish.saas.security.JwtService;
+import om.tanish.saas.tenant.TenantContext;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,7 +22,6 @@ import java.util.UUID;
 
 @Component
 public class JwtTenantFilter extends OncePerRequestFilter {
-
     private final JwtService jwtService;
 
     public JwtTenantFilter(JwtService jwtService) {
@@ -31,10 +31,10 @@ public class JwtTenantFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/auth/")
-                || path.equals("/user/create")
-                || path.equals("/user/new")
-                || path.equals("/tenant/create")
+        return path.startsWith("/api/v1/auth/")
+                || path.equals("/api/v1/user/create")
+                || path.equals("/api/v1/user/new")
+                || path.equals("/api/v1/tenant/create")
                 || path.startsWith("/h2-console")
                 || path.equals("/ping");
     }
@@ -61,23 +61,23 @@ public class JwtTenantFilter extends OncePerRequestFilter {
             UUID userId = UUID.fromString(claims.getSubject());
             UUID tenantId = UUID.fromString(claims.get("tenantId").toString());
 
-            System.out.println("🔑 JWT Filter:");
+            System.out.println("🔐 JWT Filter:");
             System.out.println("   User ID: " + userId);
             System.out.println("   Tenant ID: " + tenantId);
 
-            //critical thing
+            // Set tenant context
             TenantContext.setTenant(tenantId);
             System.out.println("✅ Tenant context set: " + TenantContext.getTenant());
 
-            String role = claims.get("role", String.class);
+            String role = claims.get("role").toString();
             List<GrantedAuthority> authorities =
                     List.of(new SimpleGrantedAuthority("ROLE_" + role));
-            System.out.println("      Role      " + role);
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
 
             filterChain.doFilter(request, response);
 
@@ -98,6 +98,7 @@ public class JwtTenantFilter extends OncePerRequestFilter {
             response.setContentType("application/json");
             response.getWriter().write("{\"error\":\"Authentication failed\"}");
         } finally {
+            // Clear context AFTER request completes
             TenantContext.clear();
             SecurityContextHolder.clearContext();
         }
