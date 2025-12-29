@@ -10,6 +10,8 @@ import om.tanish.saas.tenant.TenantContext;
 import om.tanish.saas.tenant.TenantRepository;
 import om.tanish.saas.user.User;
 import om.tanish.saas.user.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -22,6 +24,7 @@ import java.util.UUID;
 
 @Service
 public class ProjectService {
+    private static final Logger logger = LoggerFactory.getLogger(ProjectService.class);
 
     private final ProjectRepository projectRepository;
     private final TenantRepository tenantRepository;
@@ -78,7 +81,9 @@ public class ProjectService {
         project.setCreatedAt(now);
         project.setUpdatedAt(now);
 
-        return projectRepository.save(project);
+        Project saved = projectRepository.save(project);
+        logger.info("Project created: {} for tenant: {}", saved.getName(), tenantId);
+        return saved;
     }
 
     public Page<Project> getAllProjects(Pageable pageable) {
@@ -132,7 +137,9 @@ public class ProjectService {
         project.setEndDate(request.getEndDate());
         project.setUpdatedAt(Instant.now());
 
-        return projectRepository.save(project);
+        Project updated = projectRepository.save(project);
+        logger.info("Project updated: {} for tenant: {}", projectId, tenantId);
+        return updated;
     }
 
     @Transactional
@@ -145,6 +152,7 @@ public class ProjectService {
                 ));
 
         projectRepository.delete(project);
+        logger.info("Project deleted: {} for tenant: {}", projectId, tenantId);
     }
 
     public List<Project> getProjectsByStatus(ProjectStatus status) {

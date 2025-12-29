@@ -46,16 +46,19 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .headers(headers -> headers
-                        .frameOptions(frame -> frame.disable())
-                )
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/user/create", "/api/v1/user/new").permitAll()
-                        .requestMatchers("/api/v1/tenant/create").permitAll()
-                        .requestMatchers("/api/v1/h2-console/**").permitAll()
-                        .requestMatchers("/ping").permitAll()
+                        .requestMatchers(
+                                "/auth/login",
+                                "/auth/refresh",
+                                "/auth/logout",
+                                "/h2-console/**",
+                                "/api/v1/user/create",
+                                "/api/v1/user/new",
+                                "/api/v1/tenant/create",
+                                "/ping"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtTenantFilter, UsernamePasswordAuthenticationFilter.class)
@@ -63,6 +66,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

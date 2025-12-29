@@ -1,21 +1,31 @@
 spring:
   application:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
     name: saas-platform
 
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
 
+  jpa:
+    open-in-view: false
+
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
   compression:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain
+  error:
+    include-message: always
+    include-binding-errors: always
 
 jwt:
   secret: ${JWT_SECRET:your-256-bit-secret-your-256-bit-secret-your-256-bit-secret!!}
-  expiration: 3600000
+  expiration: 3600000  # 1 hour in milliseconds
 
-logging:
-  level:
-    org.hibernate.SQL: debug
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized

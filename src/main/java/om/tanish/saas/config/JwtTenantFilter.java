@@ -35,12 +35,14 @@ public class JwtTenantFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/api/v1/auth/")
+        return  path.startsWith("/auth/login")
+                || path.startsWith("/auth/refresh")
+                || path.startsWith("/h2-console")
+                || path.startsWith("/api/v1/auth")
+                || path.equals("/ping")
                 || path.equals("/api/v1/user/create")
                 || path.equals("/api/v1/user/new")
-                || path.equals("/api/v1/tenant/create")
-                || path.startsWith("/h2-console")
-                || path.equals("/ping");
+                || path.equals("/api/v1/tenant/create");
     }
 
     @Override

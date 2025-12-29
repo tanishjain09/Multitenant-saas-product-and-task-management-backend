@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RateLimitFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(RateLimitFilter.class);
 
+
     private final Map<String, AtomicInteger> requestCounts = new ConcurrentHashMap<>();
     private final Map<String, Long> resetTimes = new ConcurrentHashMap<>();
     private static final int MAX_REQUESTS = 100;
@@ -57,7 +58,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/h2-console");
+        return path.startsWith("/auth/login")
+                || path.startsWith("/auth/refresh")
+                || path.startsWith("/h2-console");
     }
 
     private String getClientIp(HttpServletRequest request) {
