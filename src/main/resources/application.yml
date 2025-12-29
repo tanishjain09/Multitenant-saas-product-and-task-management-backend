@@ -3,13 +3,10 @@ spring:
     name: saas-platform
 
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
-
-  jpa:
-    open-in-view: false
+    active: ${SPRING_PROFILES_ACTIVE:prod}
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: 8080
   compression:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain
@@ -18,8 +15,8 @@ server:
     include-binding-errors: always
 
 jwt:
-  secret: ${JWT_SECRET:your-256-bit-secret-your-256-bit-secret-your-256-bit-secret!!}
-  expiration: 3600000  # 1 hour in milliseconds
+  secret: ${JWT_SECRET:default-256-bit-secret-key-must-be-changed-in-production-environment!!}
+  expiration: 3600000
 
 management:
   endpoints:
@@ -29,3 +26,8 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+
+logging:
+  level:
+    root: INFO
+    om.tanish.saas: DEBUG
