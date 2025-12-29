@@ -23,7 +23,7 @@ public class TaskController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
-    public Task ceateTask(@Valid @RequestBody CreateTaskRequest request){
+    public Task createTask(@Valid @RequestBody CreateTaskRequest request){
         return taskService.createTask(request);
     }
 
