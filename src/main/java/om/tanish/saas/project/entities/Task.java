@@ -1,8 +1,7 @@
-package om.tanish.saas.project;
+package om.tanish.saas.project.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import om.tanish.saas.project.entities.Project;
 import om.tanish.saas.project.enums.TaskPriority;
 import om.tanish.saas.project.enums.TaskStatus;
 import om.tanish.saas.tenant.Tenant;

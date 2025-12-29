@@ -1,7 +1,7 @@
 package om.tanish.saas.project.controller;
 
-import om.tanish.saas.project.Task;
 import om.tanish.saas.project.entities.Project;
+import om.tanish.saas.project.entities.Task;
 import om.tanish.saas.project.enums.ProjectStatus;
 import om.tanish.saas.project.enums.TaskPriority;
 import om.tanish.saas.project.enums.TaskStatus;

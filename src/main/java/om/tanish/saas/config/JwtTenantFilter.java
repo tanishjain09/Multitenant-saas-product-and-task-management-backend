@@ -9,6 +9,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import om.tanish.saas.security.JwtService;
 import om.tanish.saas.tenant.TenantContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,6 +24,8 @@ import java.util.UUID;
 
 @Component
 public class JwtTenantFilter extends OncePerRequestFilter {
+    private static final Logger logger = LoggerFactory.getLogger(JwtTenantFilter.class);
+
     private final JwtService jwtService;
 
     public JwtTenantFilter(JwtService jwtService) {
@@ -61,13 +65,11 @@ public class JwtTenantFilter extends OncePerRequestFilter {
             UUID userId = UUID.fromString(claims.getSubject());
             UUID tenantId = UUID.fromString(claims.get("tenantId").toString());
 
-            System.out.println("🔐 JWT Filter:");
-            System.out.println("   User ID: " + userId);
-            System.out.println("   Tenant ID: " + tenantId);
+            logger.debug("JWT Filter - User ID: {}, Tenant ID: {}", userId, tenantId);
 
             // Set tenant context
             TenantContext.setTenant(tenantId);
-            System.out.println("✅ Tenant context set: " + TenantContext.getTenant());
+            logger.debug("Tenant context set: {}", TenantContext.getTenant());
 
             String role = claims.get("role").toString();
             List<GrantedAuthority> authorities =
@@ -78,27 +80,26 @@ public class JwtTenantFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-
+            // Continue with the request
             filterChain.doFilter(request, response);
 
         } catch (ExpiredJwtException e) {
-            System.out.println("❌ Token expired");
+            logger.warn("Token expired");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write("{\"error\":\"Token expired\"}");
         } catch (JwtException e) {
-            System.out.println("❌ Invalid token: " + e.getMessage());
+            logger.warn("Invalid token: {}", e.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write("{\"error\":\"Invalid token\"}");
         } catch (Exception e) {
-            System.out.println("❌ Authentication failed: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Authentication failed: {}", e.getMessage(), e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.setContentType("application/json");
             response.getWriter().write("{\"error\":\"Authentication failed\"}");
         } finally {
-            // Clear context AFTER request completes
+            // Clear context AFTER response is sent
             TenantContext.clear();
             SecurityContextHolder.clearContext();
         }

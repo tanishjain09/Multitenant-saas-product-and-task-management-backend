@@ -1,6 +1,6 @@
 package om.tanish.saas.project.dto;
 
-import om.tanish.saas.project.Task;
+import om.tanish.saas.project.entities.Task;
 
 import java.time.Instant;
 import java.util.UUID;

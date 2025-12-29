@@ -1,6 +1,7 @@
 package om.tanish.saas.project.repository;
 
-import om.tanish.saas.project.Task;
+
+import om.tanish.saas.project.entities.Task;
 import om.tanish.saas.project.enums.TaskStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

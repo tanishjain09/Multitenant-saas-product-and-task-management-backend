@@ -1,8 +1,9 @@
 package om.tanish.saas.project.controller;
 
 import jakarta.validation.Valid;
-import om.tanish.saas.project.Task;
+
 import om.tanish.saas.project.dto.CreateTaskRequest;
+import om.tanish.saas.project.entities.Task;
 import om.tanish.saas.project.service.TaskService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;

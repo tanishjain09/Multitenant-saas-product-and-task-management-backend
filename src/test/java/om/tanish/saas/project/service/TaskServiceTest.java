@@ -1,6 +1,6 @@
 package om.tanish.saas.project.service;
 
-import om.tanish.saas.project.Task;
+import om.tanish.saas.project.entities.Task;
 import om.tanish.saas.project.dto.CreateTaskRequest;
 import om.tanish.saas.project.entities.Project;
 import om.tanish.saas.project.enums.TaskPriority;
