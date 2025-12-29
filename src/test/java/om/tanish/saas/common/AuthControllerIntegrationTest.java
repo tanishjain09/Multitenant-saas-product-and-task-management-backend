@@ -178,9 +178,10 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isBadRequest()) // Expect 400 Bad Request
-                .andExpect(jsonPath("$.password").exists()) // Check error message exists
-                .andExpect(jsonPath("$.password").value("Password is required"));
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.errors.password").value("Password is required"));
     }
 
     @Test
