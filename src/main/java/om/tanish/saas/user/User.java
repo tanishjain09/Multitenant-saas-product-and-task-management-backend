@@ -3,9 +3,6 @@ package om.tanish.saas.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import om.tanish.saas.tenant.Tenant;
 
 import java.time.Instant;
@@ -19,7 +16,6 @@ import java.util.UUID;
                 @UniqueConstraint(columnNames = {"tenant_id", "username"})
         }
 )
-@Data
 public class User {
     @Id
     @GeneratedValue

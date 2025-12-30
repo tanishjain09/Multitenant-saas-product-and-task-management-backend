@@ -3,12 +3,10 @@ package om.tanish.saas.tenant;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
 
 import java.time.Instant;
 import java.util.UUID;
 
-@Data
 @Entity
 @Table(name = "tenants",
         uniqueConstraints = {@UniqueConstraint(columnNames = "tenant_key")})
