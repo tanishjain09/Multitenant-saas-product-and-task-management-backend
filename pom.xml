@@ -92,14 +92,6 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- DevTools -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-			<scope>runtime</scope>
-			<optional>true</optional>
-		</dependency>
-
 		<!-- JWT Dependencies -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
@@ -126,7 +118,6 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 		</dependency>
-
 		<!-- Testing -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -179,11 +170,6 @@
 				<groupId>org.flywaydb</groupId>
 				<artifactId>flyway-maven-plugin</artifactId>
 				<version>10.0.0</version>
-				<configuration>
-					<url>${flyway.url}</url>
-					<user>${flyway.user}</user>
-					<password>${flyway.password}</password>
-				</configuration>
 			</plugin>
 
 		</plugins>

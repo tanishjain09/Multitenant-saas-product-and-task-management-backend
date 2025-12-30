@@ -7,8 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class SaasApplication {
 
 	public static void main(String[] args) {
-		System.out.println("Starting SaaS Application...");
 		SpringApplication.run(SaasApplication.class, args);
 	}
-
 }
