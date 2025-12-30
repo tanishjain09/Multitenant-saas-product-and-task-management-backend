@@ -37,9 +37,11 @@ public class ProjectDashboardController {
     public Map<String, Object> getDashboardOverview(){
         UUID tenantId = getTenantFromContext();
 
+        // Fetch data
         List<Project> projects = projectRepository.findAllByTenant_Id(tenantId);
         List<Task> tasks = taskRepository.findAllByTenant_Id(tenantId);
 
+        // Calculate project statistics
         long activeProjects = projects.stream()
                 .filter(p -> p.getStatus() == ProjectStatus.IN_PROGRESS)
                 .count();
@@ -47,6 +49,8 @@ public class ProjectDashboardController {
         long completedProjects = projects.stream()
                 .filter(p -> p.getStatus() == ProjectStatus.COMPLETED)
                 .count();
+
+        // Calculate task statistics
         long totalTasks = tasks.size();
         long completedTasks = tasks.stream()
                 .filter(t -> t.getStatus() == TaskStatus.DONE)
@@ -60,6 +64,8 @@ public class ProjectDashboardController {
         long blockedTasks = tasks.stream()
                 .filter(t -> t.getStatus() == TaskStatus.BLOCKED)
                 .count();
+
+        // Build response map (using primitives/strings only - NO ENTITIES)
         Map<String, Object> overview = new HashMap<>();
         overview.put("totalProjects", projects.size());
         overview.put("activeProjects", activeProjects);
@@ -70,30 +76,38 @@ public class ProjectDashboardController {
         overview.put("inProgressTasks", inProgressTasks);
         overview.put("blockedTasks", blockedTasks);
 
+        // Calculate completion rate
         if(totalTasks > 0){
             double completionRate = (completedTasks * 100.0) / totalTasks;
             overview.put("taskCompletionRate", String.format("%.2f%%", completionRate));
-        }else {
+        } else {
             overview.put("taskCompletionRate", "0.00%");
         }
+
         return overview;
     }
+
     @GetMapping("/project/{projectId}")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
     public Map<String, Object> getProjectStatistics(@PathVariable UUID projectId){
         UUID tenantId = getTenantFromContext();
 
+        // Fetch project
         Project project = projectRepository.findByIdAndTenant_Id(projectId, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Project not found"
                 ));
+
+        // Fetch tasks
         List<Task> tasks = taskRepository.findAllByProject_IdAndTenant_Id(projectId, tenantId);
 
+        // Calculate task statistics
         long totalTasks = tasks.size();
         long completedTasks = tasks.stream()
                 .filter(t -> t.getStatus() == TaskStatus.DONE)
                 .count();
 
+        // Group tasks by status
         Map<String, Long> tasksByStatus = new HashMap<>();
         tasksByStatus.put("TODO", tasks.stream().filter(t -> t.getStatus() == TaskStatus.TODO).count());
         tasksByStatus.put("IN_PROGRESS", tasks.stream().filter(t -> t.getStatus() == TaskStatus.IN_PROGRESS).count());
@@ -101,20 +115,24 @@ public class ProjectDashboardController {
         tasksByStatus.put("DONE", completedTasks);
         tasksByStatus.put("BLOCKED", tasks.stream().filter(t -> t.getStatus() == TaskStatus.BLOCKED).count());
 
+        // Group tasks by priority
         Map<String, Long> tasksByPriority = new HashMap<>();
         tasksByPriority.put("LOW", tasks.stream().filter(t -> t.getPriority() == TaskPriority.LOW).count());
         tasksByPriority.put("MEDIUM", tasks.stream().filter(t -> t.getPriority() == TaskPriority.MEDIUM).count());
         tasksByPriority.put("HIGH", tasks.stream().filter(t -> t.getPriority() == TaskPriority.HIGH).count());
         tasksByPriority.put("URGENT", tasks.stream().filter(t -> t.getPriority() == TaskPriority.URGENT).count());
 
+        // Build response map (using primitives/strings only - NO ENTITIES)
         Map<String, Object> statistics = new HashMap<>();
+        statistics.put("projectId", project.getId().toString());
         statistics.put("projectName", project.getName());
-        statistics.put("projectStatus", project.getStatus());
+        statistics.put("projectStatus", project.getStatus().toString());
         statistics.put("totalTasks", totalTasks);
-        statistics.put("completedTask", completedTasks);
+        statistics.put("completedTasks", completedTasks);
         statistics.put("tasksByStatus", tasksByStatus);
         statistics.put("tasksByPriority", tasksByPriority);
 
+        // Calculate completion rate
         if (totalTasks > 0) {
             double completionRate = (completedTasks * 100.0) / totalTasks;
             statistics.put("completionRate", String.format("%.2f%%", completionRate));
