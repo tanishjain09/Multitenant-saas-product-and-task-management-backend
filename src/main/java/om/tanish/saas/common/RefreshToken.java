@@ -7,7 +7,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "refresh_tokens")
-class RefreshToken {
+public class RefreshToken {
     @Id
     @GeneratedValue
     private UUID id;

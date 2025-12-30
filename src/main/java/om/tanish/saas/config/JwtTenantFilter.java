@@ -102,8 +102,8 @@ public class JwtTenantFilter extends OncePerRequestFilter {
             response.getWriter().write("{\"error\":\"Authentication failed\"}");
         } finally {
             // Clear context AFTER response is sent
-            TenantContext.clear();
             SecurityContextHolder.clearContext();
         }
+        TenantContext.clear();
     }
 }
