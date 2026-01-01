@@ -20,7 +20,7 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PreAuthorize("hasRole('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN')")
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public User createUser(@Valid @RequestBody CreateUserRequest request) { //the validation annotation we write in the CreateUserRequest class wont

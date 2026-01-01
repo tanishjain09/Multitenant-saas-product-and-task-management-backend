@@ -2,6 +2,7 @@ package om.tanish.saas.project.service;
 
 import jakarta.transaction.Transactional;
 import om.tanish.saas.project.dto.CreateProjectRequest;
+import om.tanish.saas.project.dto.ProjectResponseDTO;
 import om.tanish.saas.project.entities.Project;
 import om.tanish.saas.project.enums.ProjectStatus;
 import om.tanish.saas.project.repository.ProjectRepository;
@@ -24,22 +25,25 @@ import java.util.UUID;
 
 @Service
 public class ProjectService {
+
     private static final Logger logger = LoggerFactory.getLogger(ProjectService.class);
 
     private final ProjectRepository projectRepository;
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
 
-    public ProjectService(ProjectRepository projectRepository,
-                          TenantRepository tenantRepository,
-                          UserRepository userRepository) {
+    public ProjectService(
+            ProjectRepository projectRepository,
+            TenantRepository tenantRepository,
+            UserRepository userRepository
+    ) {
         this.projectRepository = projectRepository;
         this.tenantRepository = tenantRepository;
         this.userRepository = userRepository;
     }
 
     @Transactional
-    public Project createProject(CreateProjectRequest request) {
+    public ProjectResponseDTO createProject(CreateProjectRequest request) {
         UUID tenantId = getTenantIdFromContext();
 
         Tenant tenant = tenantRepository.findById(tenantId)
@@ -52,27 +56,8 @@ public class ProjectService {
         project.setName(request.getName());
         project.setDescription(request.getDescription());
 
-        try {
-            project.setStatus(ProjectStatus.valueOf(request.getStatus().toUpperCase()));
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Invalid status: " + request.getStatus()
-            );
-        }
-
-        if (request.getOwnerId() != null) {
-            User owner = userRepository.findById(request.getOwnerId())
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST, "Owner not found"
-                    ));
-
-            if (!owner.getTenant().getId().equals(tenantId)) {
-                throw new ResponseStatusException(
-                        HttpStatus.FORBIDDEN, "Owner does not belong to this tenant"
-                );
-            }
-            project.setOwner(owner);
-        }
+        setStatus(project, request.getStatus());
+        setOwnerIfPresent(project, request.getOwnerId(), tenantId);
 
         project.setStartDate(request.getStartDate());
         project.setEndDate(request.getEndDate());
@@ -82,56 +67,76 @@ public class ProjectService {
         project.setUpdatedAt(now);
 
         Project saved = projectRepository.save(project);
-        logger.info("Project created: {} for tenant: {}", saved.getName(), tenantId);
-        return saved;
+        logger.info("Project created: {} for tenant: {}", saved.getId(), tenantId);
+
+        return mapToDto(saved);
     }
 
-    public Page<Project> getAllProjects(Pageable pageable) {
-        UUID tenantId = getTenantIdFromContext();
-        return projectRepository.findAllByTenant_Id(tenantId, pageable);
+    public Page<ProjectResponseDTO> getAllProjects(Pageable pageable) {
+        return projectRepository
+                .findAllByTenant_Id(getTenantIdFromContext(), pageable)
+                .map(this::mapToDto);
     }
 
-    public Project getProjectById(UUID projectId) {
-        UUID tenantId = getTenantIdFromContext();
-        return projectRepository.findByIdAndTenant_Id(projectId, tenantId)
+    public ProjectResponseDTO getProjectById(UUID projectId) {
+        Project project = projectRepository
+                .findByIdAndTenant_Id(projectId, getTenantIdFromContext())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Project not found"
                 ));
+
+        return mapToDto(project);
+    }
+
+    public List<ProjectResponseDTO> getProjectsByStatus(ProjectStatus status) {
+        return projectRepository
+                .findAllByTenant_IdAndStatus(getTenantIdFromContext(), status)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    public Page<ProjectResponseDTO> filterProjects(
+            ProjectStatus status,
+            UUID ownerId,
+            Pageable pageable
+    ) {
+        UUID tenantId = getTenantIdFromContext();
+
+        Page<Project> page;
+
+        if (status != null && ownerId != null) {
+            page = projectRepository
+                    .findAllByTenant_IdAndStatusAndOwner_Id(
+                            tenantId, status, ownerId, pageable);
+        } else if (status != null) {
+            page = projectRepository
+                    .findAllByTenant_IdAndStatus(tenantId, status, pageable);
+        } else if (ownerId != null) {
+            page = projectRepository
+                    .findAllByTenant_IdAndOwner_Id(tenantId, ownerId, pageable);
+        } else {
+            page = projectRepository
+                    .findAllByTenant_Id(tenantId, pageable);
+        }
+
+        return page.map(this::mapToDto);
     }
 
     @Transactional
-    public Project updateProject(UUID projectId, CreateProjectRequest request) {
+    public ProjectResponseDTO updateProject(UUID projectId, CreateProjectRequest request) {
         UUID tenantId = getTenantIdFromContext();
 
-        Project project = projectRepository.findByIdAndTenant_Id(projectId, tenantId)
+        Project project = projectRepository
+                .findByIdAndTenant_Id(projectId, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Project not found"
                 ));
 
         project.setName(request.getName());
         project.setDescription(request.getDescription());
-
-        try {
-            project.setStatus(ProjectStatus.valueOf(request.getStatus().toUpperCase()));
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Invalid status: " + request.getStatus()
-            );
-        }
-
-        if (request.getOwnerId() != null) {
-            User owner = userRepository.findById(request.getOwnerId())
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST, "Owner not found"
-                    ));
-
-            if (!owner.getTenant().getId().equals(tenantId)) {
-                throw new ResponseStatusException(
-                        HttpStatus.FORBIDDEN, "Owner does not belong to this tenant"
-                );
-            }
-            project.setOwner(owner);
-        }
+        setStatus(project, request.getStatus());
+        setOwnerIfPresent(project, request.getOwnerId(), tenantId);
 
         project.setStartDate(request.getStartDate());
         project.setEndDate(request.getEndDate());
@@ -139,14 +144,16 @@ public class ProjectService {
 
         Project updated = projectRepository.save(project);
         logger.info("Project updated: {} for tenant: {}", projectId, tenantId);
-        return updated;
+
+        return mapToDto(updated);
     }
 
     @Transactional
     public void deleteProject(UUID projectId) {
         UUID tenantId = getTenantIdFromContext();
 
-        Project project = projectRepository.findByIdAndTenant_Id(projectId, tenantId)
+        Project project = projectRepository
+                .findByIdAndTenant_Id(projectId, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Project not found"
                 ));
@@ -155,9 +162,31 @@ public class ProjectService {
         logger.info("Project deleted: {} for tenant: {}", projectId, tenantId);
     }
 
-    public List<Project> getProjectsByStatus(ProjectStatus status) {
-        UUID tenantId = getTenantIdFromContext();
-        return projectRepository.findAllByTenant_IdAndStatus(tenantId, status);
+    private void setStatus(Project project, String status) {
+        try {
+            project.setStatus(ProjectStatus.valueOf(status.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Invalid status: " + status
+            );
+        }
+    }
+
+    private void setOwnerIfPresent(Project project, UUID ownerId, UUID tenantId) {
+        if (ownerId == null) return;
+
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Owner not found"
+                ));
+
+        if (!owner.getTenant().getId().equals(tenantId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "Owner does not belong to this tenant"
+            );
+        }
+
+        project.setOwner(owner);
     }
 
     private UUID getTenantIdFromContext() {
@@ -169,18 +198,16 @@ public class ProjectService {
         }
         return tenantId;
     }
+    private ProjectResponseDTO mapToDto(Project project) {
+        User owner = project.getOwner();
 
-    public Page<Project> filterProjects(ProjectStatus status, UUID ownerId, Pageable pageable) {
-        UUID tenantId = getTenantIdFromContext();
-
-        if (status != null && ownerId != null) {
-            return projectRepository.findAllByTenant_IdAndStatusAndOwner_Id(
-                    tenantId, status, ownerId, pageable);
-        } else if (status != null) {
-            return projectRepository.findAllByTenant_IdAndStatus(tenantId, status, pageable);
-        } else if (ownerId != null) {
-            return projectRepository.findAllByTenant_IdAndOwner_Id(tenantId, ownerId, pageable);
-        }
-        return projectRepository.findAllByTenant_Id(tenantId, pageable);
+        return new ProjectResponseDTO(
+                project.getId(),
+                project.getName(),
+                project.getDescription(),
+                project.getCreatedAt(),
+                owner != null ? owner.getId() : null,
+                owner != null ? owner.getEmail() : null
+        );
     }
 }

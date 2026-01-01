@@ -3,6 +3,7 @@ package om.tanish.saas.project.controller;
 import jakarta.validation.Valid;
 
 import om.tanish.saas.project.dto.CreateTaskRequest;
+import om.tanish.saas.project.dto.TaskResponseDTO;
 import om.tanish.saas.project.entities.Task;
 import om.tanish.saas.project.service.TaskService;
 import org.springframework.http.HttpStatus;
@@ -24,32 +25,32 @@ public class TaskController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
-    public Task createTask(@Valid @RequestBody CreateTaskRequest request){
+    public TaskResponseDTO createTask(@Valid @RequestBody CreateTaskRequest request){
         return taskService.createTask(request);
     }
 
     @GetMapping("/project/{projectId}")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
-    public List<Task> getTasksByProjectId(@PathVariable UUID projectId){
+    public List<TaskResponseDTO> getTasksByProjectId(@PathVariable UUID projectId){
         return taskService.getTasksByProject(projectId);
     }
 
     @GetMapping("/my-tasks")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
-    public List<Task> getMyTasks() {
+    public List<TaskResponseDTO> getMyTasks() {
         return taskService.getMyTasks();
     }
 
     @PutMapping("/{taskId}")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
-    public Task updateTask(@PathVariable UUID taskId,
+    public TaskResponseDTO updateTask(@PathVariable UUID taskId,
                            @Valid @RequestBody CreateTaskRequest request){
         return taskService.updateTask(taskId, request);
     }
 
     @PutMapping("/{taskId}/status")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
-    public Task updateTaskStatus(@PathVariable UUID taskId,
+    public TaskResponseDTO updateTaskStatus(@PathVariable UUID taskId,
                                  @Valid @RequestBody CreateTaskRequest request){
         return taskService.updateTaskStatus(taskId, request);
     }

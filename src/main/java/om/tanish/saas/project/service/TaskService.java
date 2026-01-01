@@ -1,6 +1,7 @@
 package om.tanish.saas.project.service;
 
 import om.tanish.saas.project.dto.CreateTaskRequest;
+import om.tanish.saas.project.dto.TaskResponseDTO;
 import om.tanish.saas.project.entities.Project;
 import om.tanish.saas.project.entities.Task;
 import om.tanish.saas.project.enums.TaskPriority;
@@ -40,7 +41,7 @@ public class TaskService {
         this.userRepository = userRepository;
     }
     @Transactional
-    public Task createTask(CreateTaskRequest request){
+    public TaskResponseDTO createTask(CreateTaskRequest request){
         UUID tenantId = getTenantIdFromContext();
         UUID userId = getCurrentUserId();
 
@@ -99,10 +100,12 @@ public class TaskService {
         task.setCreatedAt(now);
         task.setUpdatedAt(now);
 
-        return taskRepository.save(task);
+        Task savedTask = taskRepository.save(task);
+
+        return mapToTaskResponseDTO(savedTask);
     }
 
-    public List<Task> getTasksByProject(UUID projectId) {
+    public List<TaskResponseDTO> getTasksByProject(UUID projectId) {
         UUID tenantId = getTenantIdFromContext();
 
         if (!projectRepository.existsByIdAndTenant_Id(projectId, tenantId)) {
@@ -110,27 +113,35 @@ public class TaskService {
                     HttpStatus.NOT_FOUND, "Project not found"
             );
         }
-
-        return taskRepository.findAllByProject_IdAndTenant_Id(projectId, tenantId);
+        List<Task> taskList = taskRepository.findAllByProject_IdAndTenant_Id(projectId, tenantId);
+        return taskList.stream()
+                .map(this::mapToTaskResponseDTO)
+                .toList();
     }
 
-    public List<Task> getMyTasks() {
+    public List<TaskResponseDTO> getMyTasks() {
         UUID tenantId = getTenantIdFromContext();
         UUID userId = getCurrentUserId();
 
-        return taskRepository.findAllByAssignee_IdAndTenant_Id(userId, tenantId);
+        List<Task> taskList = taskRepository.findAllByAssignee_IdAndTenant_Id(userId, tenantId);
+
+        return taskList.stream()
+                .map(this::mapToTaskResponseDTO)
+                .toList();
     }
 
-    public Task getTaskById(UUID taskId) {
+    public TaskResponseDTO getTaskById(UUID taskId) {
         UUID tenantId = getTenantIdFromContext();
-        return taskRepository.findByIdAndTenant_Id(taskId, tenantId)
+
+        Task task = taskRepository.findByIdAndTenant_Id(taskId, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Task not found"
                 ));
+        return mapToTaskResponseDTO(task);
     }
 
     @Transactional
-    public Task updateTask(UUID taskId, CreateTaskRequest request){
+    public TaskResponseDTO updateTask(UUID taskId, CreateTaskRequest request){
         UUID tenantId = getTenantIdFromContext();
         Task task = taskRepository.findByIdAndTenant_Id(taskId, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -168,7 +179,8 @@ public class TaskService {
         }
         task.setDueDate(request.getDueDate());
         task.setUpdatedAt(Instant.now());
-        return taskRepository.save(task);
+        Task savedTask = taskRepository.save(task);
+        return mapToTaskResponseDTO(savedTask);
     }
 
     @Transactional
@@ -182,7 +194,7 @@ public class TaskService {
     }
 
     @Transactional
-    public Task updateTaskStatus(UUID taskId, CreateTaskRequest request){
+    public TaskResponseDTO updateTaskStatus(UUID taskId, CreateTaskRequest request){
         UUID tenantId = getTenantIdFromContext();
         Task task = taskRepository.findByIdAndTenant_Id(taskId, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -195,7 +207,8 @@ public class TaskService {
                     HttpStatus.BAD_REQUEST, "Invalid status: " + request.getStatus()
             );
         }
-        return taskRepository.save(task);
+        Task savedTask = taskRepository.save(task);
+        return mapToTaskResponseDTO(savedTask);
     }
 
     private UUID getTenantIdFromContext(){
@@ -216,5 +229,23 @@ public class TaskService {
         throw new ResponseStatusException(
                 HttpStatus.UNAUTHORIZED, "User not authenticated");
     }
+    private TaskResponseDTO mapToTaskResponseDTO(Task task) {
+
+        return new TaskResponseDTO(
+                task.getId(),
+                task.getTitle(),
+                task.getDescription(),
+                task.getProject().getId(),
+                task.getProject().getName(),
+                task.getAssignee() != null ? task.getAssignee().getId() : null,
+                task.getAssignee() != null ? task.getAssignee().getEmail() : null,
+                task.getPriority(),
+                task.getStatus(),
+                task.getDueDate(),
+                task.getCreatedAt(),
+                task.getUpdatedAt()
+        );
+    }
+
 
 }

@@ -2,7 +2,7 @@ package om.tanish.saas.project.controller;
 
 import jakarta.validation.Valid;
 import om.tanish.saas.project.dto.CreateProjectRequest;
-import om.tanish.saas.project.entities.Project;
+import om.tanish.saas.project.dto.ProjectResponseDTO;
 import om.tanish.saas.project.enums.ProjectStatus;
 import om.tanish.saas.project.service.ProjectService;
 import org.springframework.data.domain.Page;
@@ -28,13 +28,13 @@ public class ProjectController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
-    public Project createProject(@Valid @RequestBody CreateProjectRequest createProjectRequest){
+    public ProjectResponseDTO createProject(@Valid @RequestBody CreateProjectRequest createProjectRequest){
         return projectService.createProject(createProjectRequest);
     }
 
     @GetMapping("/all")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
-    public Page<Project> getALlProjects(
+    public Page<ProjectResponseDTO> getALlProjects(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -43,13 +43,13 @@ public class ProjectController {
         Sort.Direction sortDirection = direction.equalsIgnoreCase("ASC")
                 ? Sort.Direction.ASC
                 : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Pageable pageable = PageRequest.of(page, size, Sort.Direction.fromString(direction), sortBy);
         return projectService.getAllProjects(pageable);
     }
 
     @GetMapping("/filter")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
-    public Page<Project> filterProjects(
+    public Page<ProjectResponseDTO> filterProjects(
             @RequestParam(required = false) ProjectStatus status,
             @RequestParam(required = false) UUID ownerId,
             @RequestParam(defaultValue = "0") int page,
@@ -62,7 +62,7 @@ public class ProjectController {
 
     @GetMapping("/{projectId}")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
-    public Project getProjectById(@PathVariable UUID projectId){
+    public ProjectResponseDTO getProjectById(@PathVariable UUID projectId){
         return projectService.getProjectById(projectId);
     }
 
@@ -74,7 +74,7 @@ public class ProjectController {
     }
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
-    public List<Project> getProjectByStatus(@PathVariable String status){
+    public List<ProjectResponseDTO> getProjectByStatus(@PathVariable String status){
         try{
             ProjectStatus projectStatus = ProjectStatus.valueOf(status.toUpperCase());
             return projectService.getProjectsByStatus(projectStatus);
@@ -82,4 +82,6 @@ public class ProjectController {
             throw new IllegalArgumentException("Invalid status: " + status);
         }
     }
+
+
 }
