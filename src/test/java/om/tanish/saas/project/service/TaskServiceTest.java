@@ -3,7 +3,6 @@ package om.tanish.saas.project.service;
 import om.tanish.saas.project.entities.Task;
 import om.tanish.saas.project.dto.CreateTaskRequest;
 import om.tanish.saas.project.entities.Project;
-import om.tanish.saas.project.enums.TaskPriority;
 import om.tanish.saas.project.enums.TaskStatus;
 import om.tanish.saas.project.repository.ProjectRepository;
 import om.tanish.saas.project.repository.TaskRepository;
@@ -115,7 +114,7 @@ class TaskServiceTest {
         // Arrange
         TenantContext.setTenant(testTenantId);
         when(tenantRepository.findById(testTenantId)).thenReturn(Optional.of(testTenant));
-        when(projectRepository.findByIdAndTenant_Id(testProjectId, testTenantId))
+        when(projectRepository.findByIdAndTenantId(testProjectId, testTenantId))
                 .thenReturn(Optional.of(testProject));
         when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
 
@@ -139,7 +138,7 @@ class TaskServiceTest {
         // Arrange
         TenantContext.setTenant(testTenantId);
         when(tenantRepository.findById(testTenantId)).thenReturn(Optional.of(testTenant));
-        when(projectRepository.findByIdAndTenant_Id(testProjectId, testTenantId))
+        when(projectRepository.findByIdAndTenantId(testProjectId, testTenantId))
                 .thenReturn(Optional.empty());
 
         // Act & Assert
@@ -164,7 +163,7 @@ class TaskServiceTest {
         assignee.setTenant(testTenant);
 
         when(tenantRepository.findById(testTenantId)).thenReturn(Optional.of(testTenant));
-        when(projectRepository.findByIdAndTenant_Id(testProjectId, testTenantId))
+        when(projectRepository.findByIdAndTenantId(testProjectId, testTenantId))
                 .thenReturn(Optional.of(testProject));
         when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(userRepository.findById(assigneeId)).thenReturn(Optional.of(assignee));
@@ -196,7 +195,7 @@ class TaskServiceTest {
         assignee.setTenant(differentTenant);
 
         when(tenantRepository.findById(testTenantId)).thenReturn(Optional.of(testTenant));
-        when(projectRepository.findByIdAndTenant_Id(testProjectId, testTenantId))
+        when(projectRepository.findByIdAndTenantId(testProjectId, testTenantId))
                 .thenReturn(Optional.of(testProject));
         when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(userRepository.findById(assigneeId)).thenReturn(Optional.of(assignee));
@@ -217,7 +216,7 @@ class TaskServiceTest {
         validRequest.setStatus("INVALID_STATUS");
 
         when(tenantRepository.findById(testTenantId)).thenReturn(Optional.of(testTenant));
-        when(projectRepository.findByIdAndTenant_Id(testProjectId, testTenantId))
+        when(projectRepository.findByIdAndTenantId(testProjectId, testTenantId))
                 .thenReturn(Optional.of(testProject));
         when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
 
@@ -242,7 +241,7 @@ class TaskServiceTest {
         Task task2 = new Task();
         task2.setId(UUID.randomUUID());
 
-        when(taskRepository.findAllByProject_IdAndTenant_Id(testProjectId, testTenantId))
+        when(taskRepository.findAllByProjectIdAndTenantId(testProjectId, testTenantId))
                 .thenReturn(Arrays.asList(task1, task2));
 
         // Act
@@ -251,7 +250,7 @@ class TaskServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(2, result.size());
-        verify(taskRepository, times(1)).findAllByProject_IdAndTenant_Id(testProjectId, testTenantId);
+        verify(taskRepository, times(1)).findAllByProjectIdAndTenantId(testProjectId, testTenantId);
     }
 
     @Test

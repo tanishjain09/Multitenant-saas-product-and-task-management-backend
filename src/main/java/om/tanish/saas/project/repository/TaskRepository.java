@@ -13,18 +13,18 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
- public interface TaskRepository extends JpaRepository<Task, UUID> {
+public interface TaskRepository extends JpaRepository<Task, UUID> {
 
-     List<Task> findAllByTenant_Id(UUID tenantId);
+    List<Task> findAllByTenant_Id(UUID tenantId);
 
-     List<Task> findAllByProject_IdAndTenant_Id(UUID projectId, UUID tenantId);
+    List<Task> findAllByProject_IdAndTenant_Id(UUID projectId, UUID tenantId);
 
-     List<Task> findAllByAssignee_IdAndTenant_Id(UUID assigneeId, UUID tenantId);
+    List<Task> findAllByAssignee_IdAndTenant_Id(UUID assigneeId, UUID tenantId);
 
-     Optional<Task> findByIdAndTenant_Id(UUID id, UUID tenantId);
+    Optional<Task> findByIdAndTenant_Id(UUID id, UUID tenantId);
 
-     @Query("SELECT COUNT(t) FROM Task t WHERE t.project.id = :projectId AND t.status = :status")
-     long countByProjectIdAndStatus(@Param("projectId") UUID projectId, @Param("status") TaskStatus status);
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.project.id = :projectId AND t.status = :status")
+    long countByProjectIdAndStatus(@Param("projectId") UUID projectId, @Param("status") TaskStatus status);
 
-     boolean existsByIdAndTenant_Id(UUID id, UUID tenantId);
- }
+    boolean existsByIdAndTenant_Id(UUID id, UUID tenantId);
+}

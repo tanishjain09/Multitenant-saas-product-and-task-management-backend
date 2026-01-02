@@ -41,7 +41,7 @@ public class TenantController {
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @PostMapping("{key}")
+    @PutMapping("{key}")
     public TenantDTO updateTenant(
             @RequestParam String key,
             @RequestBody CreateTenantRequest request
@@ -59,7 +59,7 @@ public class TenantController {
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @PostMapping("{key}")
+    @PutMapping("{key}")
     public TenantDTO updateTenantStatus(
             @RequestParam String key,
             @RequestBody UpdateTenantStatusRequest request){

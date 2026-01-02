@@ -44,14 +44,14 @@ public class TaskController {
     @PutMapping("/{taskId}")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
     public TaskResponseDTO updateTask(@PathVariable UUID taskId,
-                           @Valid @RequestBody CreateTaskRequest request){
+                                      @Valid @RequestBody CreateTaskRequest request){
         return taskService.updateTask(taskId, request);
     }
 
     @PutMapping("/{taskId}/status")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
     public TaskResponseDTO updateTaskStatus(@PathVariable UUID taskId,
-                                 @Valid @RequestBody CreateTaskRequest request){
+                                            @Valid @RequestBody CreateTaskRequest request){
         return taskService.updateTaskStatus(taskId, request);
     }
 
@@ -62,4 +62,3 @@ public class TaskController {
         taskService.deleteTask(taskId);
     }
 }
-
