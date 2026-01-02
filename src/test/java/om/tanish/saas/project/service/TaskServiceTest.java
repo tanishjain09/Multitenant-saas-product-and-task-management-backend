@@ -1,5 +1,6 @@
 package om.tanish.saas.project.service;
 
+import om.tanish.saas.project.dto.TaskResponseDTO;
 import om.tanish.saas.project.entities.Task;
 import om.tanish.saas.project.dto.CreateTaskRequest;
 import om.tanish.saas.project.entities.Project;
@@ -125,7 +126,7 @@ class TaskServiceTest {
         when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
 
         // Act
-        Task result = taskService.createTask(validRequest);
+        TaskResponseDTO result = taskService.createTask(validRequest);
 
         // Assert
         assertNotNull(result);
@@ -173,7 +174,7 @@ class TaskServiceTest {
         when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
 
         // Act
-        Task result = taskService.createTask(validRequest);
+        TaskResponseDTO result = taskService.createTask(validRequest);
 
         // Assert
         assertNotNull(result);

@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import om.tanish.saas.user.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,17 @@ public class JwtService {
 
     @Value("${jwt.secret}")
     private String SECRET;
+
+    @PostConstruct
+    public void validateSecret() {
+        if (SECRET == null || SECRET.length() < 32) {
+            throw new IllegalStateException(
+                    "JWT_SECRET must be set and at least 256 bits (32 characters). " +
+                            "Set it via environment variable."
+            );
+        }
+        logger.info("JWT secret validated successfully");
+    }
 
     private byte[] getSecretKey() {
         return SECRET.getBytes(StandardCharsets.UTF_8);

@@ -34,7 +34,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
         resetTimes.putIfAbsent(clientIp, currentTime + TIME_WINDOW);
         requestCounts.putIfAbsent(clientIp, new AtomicInteger(0));
 
-        // Reset counter if time window has passed
         if (currentTime > resetTimes.get(clientIp)) {
             requestCounts.get(clientIp).set(0);
             resetTimes.put(clientIp, currentTime + TIME_WINDOW);
@@ -66,8 +65,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private String getClientIp(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
+            String clientIp = xForwardedFor.split(",")[0].trim();
+            if(isValidIpAddress(clientIp)) return clientIp;
         }
         return request.getRemoteAddr();
+    }
+    private boolean isValidIpAddress(String ip) {
+        String ipPattern =
+                "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}" +
+                        "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
+        return ip.matches(ipPattern);
     }
 }

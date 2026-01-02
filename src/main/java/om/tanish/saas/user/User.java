@@ -3,6 +3,7 @@ package om.tanish.saas.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import om.tanish.saas.common.AuditableEntity;
 import om.tanish.saas.tenant.Tenant;
 
 import java.time.Instant;
@@ -16,7 +17,7 @@ import java.util.UUID;
                 @UniqueConstraint(columnNames = {"tenant_id", "username"})
         }
 )
-public class User {
+public class User extends AuditableEntity {
     @Id
     @GeneratedValue
     private UUID id;
@@ -39,9 +40,6 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
-
-    @Column(nullable = false)
-    private Instant createdAt;
 
     public UUID getId() {
         return id;
@@ -93,13 +91,5 @@ public class User {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid role: " + role);
         }
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
     }
 }

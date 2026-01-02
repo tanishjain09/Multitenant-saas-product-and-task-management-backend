@@ -13,57 +13,51 @@ import java.util.List;
 public class TenantController {
 
     @Autowired
-    private TenantService tenantService ;
+    private TenantService tenantService;
 
-    //---------------CREATE------------------
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TenantDTO createTenant(@Valid @RequestBody CreateTenantRequest request) {
-
         Tenant savedTenant = tenantService.createTenant(request);
         return new TenantDTO(savedTenant);
     }
-    // ---------------RETRIEVE----------------
+
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @GetMapping("/getAll")
     public List<TenantDTO> getAllTenants() {
-
         return tenantService.findAll().stream()
                 .map(TenantDTO::new)
                 .toList();
     }
-    //----------------
 
     @GetMapping("/{key}")
-    public TenantDTO getTenantByKey(@RequestParam String key){
+    public TenantDTO getTenantByKey(@PathVariable String key) {
         Tenant tenant = tenantService.getTenantByKey(key);
         return new TenantDTO(tenant);
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @PutMapping("{key}")
+    @PutMapping("/{key}")
     public TenantDTO updateTenant(
-            @RequestParam String key,
+            @PathVariable String key,
             @RequestBody CreateTenantRequest request
-    ){
+    ) {
         Tenant updatedTenant = tenantService.updateTenant(key, request);
         return new TenantDTO(updatedTenant);
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @DeleteMapping("key")
-    public void deleteTenant(
-            @RequestParam String key
-    ){
-        tenantService.deleteTenant(key);
+    @PutMapping("/{key}/status")
+    public TenantDTO updateTenantStatus(
+            @PathVariable String key,
+            @RequestBody UpdateTenantStatusRequest request) {
+        Tenant tenant = tenantService.updateTenantStatus(key, request);
+        return new TenantDTO(tenant);
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @PutMapping("{key}")
-    public TenantDTO updateTenantStatus(
-            @RequestParam String key,
-            @RequestBody UpdateTenantStatusRequest request){
-        Tenant tenant = tenantService.updateTenantStatus(key, request);
-        return new TenantDTO(tenant);
+    @DeleteMapping("/{key}")
+    public void deleteTenant(@PathVariable String key) {
+        tenantService.deleteTenant(key);
     }
 }

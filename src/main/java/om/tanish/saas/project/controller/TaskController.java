@@ -6,6 +6,10 @@ import om.tanish.saas.project.dto.CreateTaskRequest;
 import om.tanish.saas.project.dto.TaskResponseDTO;
 import om.tanish.saas.project.entities.Task;
 import om.tanish.saas.project.service.TaskService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -31,8 +35,16 @@ public class TaskController {
 
     @GetMapping("/{projectId}")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
-    public List<TaskResponseDTO> getTasksByProjectId(@PathVariable UUID projectId){
-        return taskService.getTasksByProject(projectId);
+    public Page<TaskResponseDTO> getTasksByProjectId(
+            @PathVariable UUID projectId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction
+    ) {
+        Pageable pageable = (Pageable) PageRequest.of(page, size,
+                Sort.Direction.fromString(direction), sortBy);
+        return taskService.getTasksByProject(projectId, pageable);
     }
 
     @GetMapping("/my-tasks")

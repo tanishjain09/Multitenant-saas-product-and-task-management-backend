@@ -3,11 +3,13 @@ package om.tanish.saas.project.repository;
 
 import om.tanish.saas.project.entities.Task;
 import om.tanish.saas.project.enums.TaskStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -15,9 +17,13 @@ import java.util.UUID;
 @Repository
 public interface TaskRepository extends JpaRepository<Task, UUID> {
 
+    @EntityGraph(attributePaths = {"project", "assignee", "createdBy", "tenant"})
     List<Task> findAllByTenant_Id(UUID tenantId);
 
     List<Task> findAllByProject_IdAndTenant_Id(UUID projectId, UUID tenantId);
+
+    @EntityGraph(attributePaths = {"project", "assignee", "createdBy"})
+    Page<Task> findAllByProject_IdAndTenant_Id(UUID projectId, UUID tenantId, Pageable pageable);
 
     List<Task> findAllByAssignee_IdAndTenant_Id(UUID assigneeId, UUID tenantId);
 

@@ -13,11 +13,14 @@ import om.tanish.saas.tenant.TenantContext;
 import om.tanish.saas.tenant.TenantRepository;
 import om.tanish.saas.user.User;
 import om.tanish.saas.user.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
 
 import java.time.Instant;
 import java.util.List;
@@ -105,18 +108,17 @@ public class TaskService {
         return mapToTaskResponseDTO(savedTask);
     }
 
-    public List<TaskResponseDTO> getTasksByProject(UUID projectId) {
+    public Page<TaskResponseDTO> getTasksByProject(UUID projectId, Pageable pageable) {
         UUID tenantId = getTenantIdFromContext();
 
         if (!projectRepository.existsByIdAndTenant_Id(projectId, tenantId)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Project not found"
-            );
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found");
         }
-        List<Task> taskList = taskRepository.findAllByProject_IdAndTenant_Id(projectId, tenantId);
-        return taskList.stream()
-                .map(this::mapToTaskResponseDTO)
-                .toList();
+
+        Page<Task> tasks = taskRepository.findAllByProject_IdAndTenant_Id(
+                projectId, tenantId, pageable);
+
+        return tasks.map(this::mapToTaskResponseDTO);
     }
 
     public List<TaskResponseDTO> getMyTasks() {

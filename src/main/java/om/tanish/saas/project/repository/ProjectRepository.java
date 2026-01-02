@@ -4,6 +4,7 @@ import om.tanish.saas.project.entities.Project;
 import om.tanish.saas.project.enums.ProjectStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,11 +17,13 @@ import java.util.UUID;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
-    // Basic tenant-aware queries
+
     List<Project> findAllByTenant_Id(UUID tenantId);
 
+    @EntityGraph(attributePaths = {"owner", "tenant"})
     Page<Project> findAllByTenant_Id(UUID tenantId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"owner", "tenant"})
     Optional<Project> findByIdAndTenant_Id(UUID id, UUID tenantId);
 
     boolean existsByIdAndTenant_Id(UUID id, UUID tenantId);
@@ -70,4 +73,6 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
             @Param("searchTerm") String searchTerm,
             Pageable pageable
     );
+
+    Object findByIdAndTenantId(UUID testProjectId, UUID testTenantId);
 }

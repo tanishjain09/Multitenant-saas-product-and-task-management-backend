@@ -1,6 +1,7 @@
-package om.tanish.saas.security;
+package om.tanish.saas.config;
 
-import om.tanish.saas.config.JwtTenantFilter;
+import om.tanish.saas.security.JwtTenantFilter;
+import om.tanish.saas.security.RateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;

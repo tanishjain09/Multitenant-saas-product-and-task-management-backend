@@ -1,4 +1,4 @@
-package om.tanish.saas.config;
+package om.tanish.saas.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -7,7 +7,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import om.tanish.saas.security.JwtService;
 import om.tanish.saas.tenant.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
