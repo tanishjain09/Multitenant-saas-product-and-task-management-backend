@@ -19,6 +19,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByEmailAndTenantId(String email, UUID id);
 
+    Optional<User> findByIdAndTenant_Id(UUID userId, UUID tenantId);
+
+    void deleteByIdAndTenant_Id(UUID userId, UUID tenantId);
+
     @Query("SELECT u FROM User u WHERE u.tenant.id = :tenantId AND u.role = :role")
     List<User> findAllByTenantIdAndRole(@Param("tenantId") UUID tenantId,
                                         @Param("role") UserRole role);

@@ -12,6 +12,7 @@ public class CreateTenantRequest {
     @Size(min = 3, max = 100)
     private String name;
 
+
     public @NotBlank(message = "Tenant key is required") @Size(min = 3, max = 50) String getTenantKey() {
         return tenantKey;
     }
@@ -27,4 +28,4 @@ public class CreateTenantRequest {
     public void setName(@NotBlank(message = "Name is required") @Size(min = 3, max = 100) String name) {
         this.name = name;
     }
-}
+}   

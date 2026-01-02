@@ -5,41 +5,65 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Instant;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/tenant")
+@RequestMapping("/api/v1/tenants")
 public class TenantController {
 
     @Autowired
-    private TenantRepository tenantRepository;
+    private TenantService tenantService ;
 
-    @PostMapping("/create")
+    //---------------CREATE------------------
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Tenant createTenant(@Valid @RequestBody CreateTenantRequest request) {
+    public TenantDTO createTenant(@Valid @RequestBody CreateTenantRequest request) {
 
-        if(tenantRepository.existsByTenantKey(request.getTenantKey())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Tenant with this Key already exists");
-        }
+        Tenant savedTenant = tenantService.createTenant(request);
+        return new TenantDTO(savedTenant);
+    }
+    // ---------------RETRIEVE----------------
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @GetMapping("/getAll")
+    public List<TenantDTO> getAllTenants() {
 
+        return tenantService.findAll().stream()
+                .map(TenantDTO::new)
+                .toList();
+    }
+    //----------------
 
-        Tenant tenant = new Tenant();
-        tenant.setTenantKey(request.getTenantKey());
-        tenant.setName(request.getName());
-        tenant.setStatus(TenantStatus.ACTIVE);
-        tenant.setCreatedAt(Instant.now());
-        return tenantRepository.save(tenant);
-
+    @GetMapping("/{key}")
+    public TenantDTO getTenantByKey(@RequestParam String key){
+        Tenant tenant = tenantService.getTenantByKey(key);
+        return new TenantDTO(tenant);
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @GetMapping("/getAll")
-    public List<Tenant> getAllTenants() {
-        return tenantRepository.findAll();
+    @PostMapping("{key}")
+    public TenantDTO updateTenant(
+            @RequestParam String key,
+            @RequestBody CreateTenantRequest request
+    ){
+        Tenant updatedTenant = tenantService.updateTenant(key, request);
+        return new TenantDTO(updatedTenant);
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @DeleteMapping("key")
+    public void deleteTenant(
+            @RequestParam String key
+    ){
+        tenantService.deleteTenant(key);
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PostMapping("{key}")
+    public TenantDTO updateTenantStatus(
+            @RequestParam String key,
+            @RequestBody UpdateTenantStatusRequest request){
+        Tenant tenant = tenantService.updateTenantStatus(key, request);
+        return new TenantDTO(tenant);
     }
 }

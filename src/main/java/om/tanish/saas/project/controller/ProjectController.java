@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/project")
+@RequestMapping("/api/v1/projects")
 public class ProjectController {
     private final ProjectService projectService;
 
@@ -25,14 +25,14 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
-    @PostMapping("/create")
+    @PostMapping("")
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
     public ProjectResponseDTO createProject(@Valid @RequestBody CreateProjectRequest createProjectRequest){
         return projectService.createProject(createProjectRequest);
     }
 
-    @GetMapping("/all")
+    @GetMapping()
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
     public Page<ProjectResponseDTO> getALlProjects(
             @RequestParam(defaultValue = "0") int page,

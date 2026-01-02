@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/user")
+@RequestMapping("/api/v1/users")
 public class UserController {
 
     private final UserService userService;
@@ -20,28 +20,57 @@ public class UserController {
         this.userService = userService;
     }
 
+    // ----------------CREATE--------------------
+    @PostMapping("/register")
+    public UserDTO register(
+            @RequestParam String tenantKey,
+            @RequestBody CreateUserRequest request
+    ) {
+        User user = userService.register(tenantKey, request);
+        return new UserDTO(user);
+    }
+
+
     @PreAuthorize("hasAnyRole('TENANT_ADMIN')")
-    @PostMapping("/create")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User createUser(@Valid @RequestBody CreateUserRequest request) { //the validation annotation we write in the CreateUserRequest class wont
-        //work wihtout @Valid
+    public User createUser(@Valid @RequestBody CreateUserRequest request) {
         return userService.createUser(request);
     }
 
-    @GetMapping("/all")
+    // --------------------Retrieve------------------------
+    @GetMapping
     public List<UserDTO> getAllUsers() {
         return userService.getAllUsers().stream()
                 .map(UserDTO::new)
                 .toList();
     }
-    @PostMapping("/new")
-    public User createInitialUser(
-            @RequestParam String tenantKey,
-            @RequestBody CreateUserRequest request
-    ) {
-        return userService.createInitialUser(tenantKey, request);
+    @GetMapping("/{id}")
+    public UserDTO getUserById(@PathVariable UUID id){
+        User user = userService.getUserById(id);
+        return new UserDTO(user);
     }
 
+    // ---------------------UPDATE-------------------
+    @PreAuthorize("hasRole('TENANT_ADMIN')")
+    @PutMapping("/{id}")
+    public UserDTO updateUser(
+            @PathVariable UUID id,
+            @Valid @RequestBody CreateUserRequest request) {
+        User updateUser = userService.updateUser(id, request);
+
+        return new UserDTO(updateUser);
+    }
+
+    // -----------------DELETE---------------------------
+    @PreAuthorize("hasRole('TENANT_ADMIN')")
+    @DeleteMapping("{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable UUID id){
+        userService.deleteUser(id);
+    }
+
+    //Debug
     @GetMapping("/debug/context")
     public String debugContext() {
         UUID tenantId = TenantContext.getTenant();

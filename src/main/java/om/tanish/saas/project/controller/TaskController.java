@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/task")
+@RequestMapping("/api/v1/tasks")
 public class TaskController {
 
     private final TaskService taskService;
@@ -22,14 +22,14 @@ public class TaskController {
         this.taskService = taskService;
     }
 
-    @PostMapping("/create")
+    @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
     public TaskResponseDTO createTask(@Valid @RequestBody CreateTaskRequest request){
         return taskService.createTask(request);
     }
 
-    @GetMapping("/project/{projectId}")
+    @GetMapping("/{projectId}")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
     public List<TaskResponseDTO> getTasksByProjectId(@PathVariable UUID projectId){
         return taskService.getTasksByProject(projectId);

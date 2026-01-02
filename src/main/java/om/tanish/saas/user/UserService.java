@@ -30,7 +30,7 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
     @Transactional
-    public User createInitialUser(String tenantKey, CreateUserRequest request) {
+    public User register(String tenantKey, CreateUserRequest request) {
 
         Tenant tenant = tenantRepository
                 .findByTenantKey(tenantKey)
@@ -94,6 +94,43 @@ public class UserService {
         }
         System.out.println("🔍 Getting users for tenant: " + tenantId);
         return userRepository.findAllByTenant_Id(tenantId);
+    }
+
+    public User getUserById(UUID id){
+        return userRepository.findByIdAndTenant_Id(id, TenantContext.getTenant())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Cannot get user by id"
+                ));
+
+    }
+    @Transactional
+    public User updateUser(UUID  userId, CreateUserRequest request){
+        UUID tenantId = TenantContext.getTenant();
+
+        User user = userRepository.findByIdAndTenant_Id(userId, tenantId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Cannot get user by get"
+                ));
+        if(request.getUsername() != null){
+            user.setUsername(request.getUsername());
+        }
+        if(request.getEmail() != null){
+            user.setEmail(request.getEmail());
+        }
+        if (request.getRole() != null) {
+            user.setRole(request.getRole());
+        }
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteUser(UUID id){
+        UUID tenantId = TenantContext.getTenant();
+         User user = userRepository.findById(id)
+                 .orElseThrow(() -> new ResponseStatusException(
+                         HttpStatus.NOT_FOUND, "User not found"
+                 ));
+         userRepository.deleteByIdAndTenant_Id(id, tenantId);
     }
 
     private void validatePassword(String password){

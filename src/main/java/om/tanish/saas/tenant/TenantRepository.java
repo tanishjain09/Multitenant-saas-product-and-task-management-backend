@@ -14,5 +14,6 @@ public interface TenantRepository extends JpaRepository<Tenant, UUID> {
     boolean existsByTenantKey(String tenantKey);
 
     Optional<Tenant> findByTenantKey(String tenantKey);
+    void deleteByTenantKey(String tenantKey);
 
 }
