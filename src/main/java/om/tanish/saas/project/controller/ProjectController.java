@@ -73,6 +73,15 @@ public class ProjectController {
         projectService.deleteProject(projectId);
     }
 
+    @PutMapping("/{projectId}")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
+    public ProjectResponseDTO updateProject(
+            @PathVariable UUID projectId,
+            @Valid @RequestBody CreateProjectRequest request
+    ) {
+        return projectService.updateProject(projectId, request);
+    }
+
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
     public List<ProjectResponseDTO> getProjectByStatus(@PathVariable String status){
