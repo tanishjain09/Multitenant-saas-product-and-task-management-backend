@@ -43,8 +43,24 @@ public class UserService {
 
     @Transactional
     public User createUser(CreateUserRequest request) {
+
         System.out.println("calling this method");
         UUID tenantId = TenantContext.getTenant();
+        UserRole role = UserRole.valueOf(request.getRole().trim().toUpperCase());
+
+        if(role == UserRole.SUPER_ADMIN){
+            if(tenantId != null){
+                throw new IllegalStateException(
+                        "SUPER_ADMIN must not be associated with a tenant"
+                );
+            }
+        }else{
+            if(tenantId == null){
+                throw new IllegalStateException(
+                        "SUPER_ADMIN must not be associated with a tenant"
+                );
+            }
+        }
         if (tenantId == null) {
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED, "Tenant context missing"
@@ -59,6 +75,7 @@ public class UserService {
         return createUserInternal(tenant, request);
     }
     private User createUserInternal(Tenant tenant, CreateUserRequest request){
+
         if (userRepository.existsByTenantAndEmail(tenant, request.getEmail())) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT, "Email already exists in this tenant"
@@ -85,15 +102,8 @@ public class UserService {
     }
 
     public List<User> getAllUsers() {
-        UUID tenantId = TenantContext.getTenant();
-        if (tenantId == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
-                    "Tenant context not set - authentication required"
-            );
-        }
-        System.out.println("🔍 Getting users for tenant: " + tenantId);
-        return userRepository.findAllByTenant_Id(tenantId);
+
+        return userRepository.findAll();
     }
 
     public User getUserById(UUID id){

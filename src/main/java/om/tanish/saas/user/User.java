@@ -23,8 +23,8 @@ public class User extends AuditableEntity {
     private UUID id;
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "tenant_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
     private Tenant tenant;
 
     @Column(nullable = false)

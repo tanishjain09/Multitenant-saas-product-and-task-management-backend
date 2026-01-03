@@ -21,7 +21,8 @@ public class UserController {
     }
 
     // ----------------CREATE--------------------
-    @PostMapping("/register")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PostMapping("/register/{tenantKey}")
     public UserDTO register(
             @RequestParam String tenantKey,
             @RequestBody CreateUserRequest request
@@ -30,8 +31,7 @@ public class UserController {
         return new UserDTO(user);
     }
 
-
-    @PreAuthorize("hasAnyRole('TENANT_ADMIN')")
+    @PreAuthorize("hasRole('TENANT_ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public User createUser(@Valid @RequestBody CreateUserRequest request) {
@@ -39,6 +39,7 @@ public class UserController {
     }
 
     // --------------------Retrieve------------------------
+    @PreAuthorize("hasRole('TENANT_ADMIN')")
     @GetMapping
     public List<UserDTO> getAllUsers() {
         return userService.getAllUsers().stream()
@@ -46,6 +47,7 @@ public class UserController {
                 .toList();
     }
     @GetMapping("/{id}")
+    @PreAuthorize("!hasRole('SUPER_ADMIN')")
     public UserDTO getUserById(@PathVariable UUID id){
         User user = userService.getUserById(id);
         return new UserDTO(user);

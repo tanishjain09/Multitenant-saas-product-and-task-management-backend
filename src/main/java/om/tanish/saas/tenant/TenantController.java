@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static org.springframework.security.authorization.AuthorityReactiveAuthorizationManager.hasRole;
+
+@PreAuthorize("hasRole('SUPER_ADMIN')")
 @RestController
 @RequestMapping("/api/v1/tenants")
 public class TenantController {
@@ -15,6 +18,7 @@ public class TenantController {
     @Autowired
     private TenantService tenantService;
 
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TenantDTO createTenant(@Valid @RequestBody CreateTenantRequest request) {
@@ -30,6 +34,7 @@ public class TenantController {
                 .toList();
     }
 
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @GetMapping("/{key}")
     public TenantDTO getTenantByKey(@PathVariable String key) {
         Tenant tenant = tenantService.getTenantByKey(key);

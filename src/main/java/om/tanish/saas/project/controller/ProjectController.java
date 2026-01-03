@@ -72,6 +72,7 @@ public class ProjectController {
     public void deleteProject(@PathVariable UUID projectId){
         projectService.deleteProject(projectId);
     }
+
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'USER')")
     public List<ProjectResponseDTO> getProjectByStatus(@PathVariable String status){

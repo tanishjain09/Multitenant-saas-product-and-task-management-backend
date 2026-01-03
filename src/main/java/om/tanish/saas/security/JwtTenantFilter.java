@@ -23,6 +23,7 @@ import java.util.UUID;
 
 @Component
 public class JwtTenantFilter extends OncePerRequestFilter {
+
     private static final Logger logger = LoggerFactory.getLogger(JwtTenantFilter.class);
 
     private final JwtService jwtService;
@@ -35,43 +36,42 @@ public class JwtTenantFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
         return path.startsWith("/api/v1/auth/")
-                || path.equals("/api/v1/user/create")
-                || path.equals("/api/v1/user/new")
-                || path.equals("/api/v1/tenant/create")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")
                 || path.startsWith("/h2-console")
                 || path.equals("/ping")
                 || path.startsWith("/actuator");
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
         try {
             String authHeader = request.getHeader("Authorization");
 
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                logger.debug("Missing or invalid Authorization header for path: {}", request.getRequestURI());
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"error\":\"Missing or invalid Authorization header\"}");
+                unauthorized(response, "Missing or invalid Authorization header");
                 return;
             }
 
             String token = authHeader.substring(7);
             Claims claims = jwtService.extractClaims(token);
 
+            // ---------------- USER ID ----------------
             UUID userId = UUID.fromString(claims.getSubject());
-            UUID tenantId = UUID.fromString(claims.get("tenantId").toString());
 
-            logger.debug("JWT Filter - User ID: {}, Tenant ID: {}", userId, tenantId);
+            // ---------------- TENANT CONTEXT (OPTIONAL) ----------------
+            if (claims.containsKey("tenantId")) {
+                UUID tenantId = UUID.fromString(claims.get("tenantId").toString());
+                TenantContext.setTenant(tenantId);
+                logger.debug("Tenant context set: {}", tenantId);
+            }
 
-            // Set tenant context
-            TenantContext.setTenant(tenantId);
-            logger.debug("Tenant context set: {}", TenantContext.getTenant());
-
+            // ---------------- ROLE ----------------
             String role = claims.get("role").toString();
             List<GrantedAuthority> authorities =
                     List.of(new SimpleGrantedAuthority("ROLE_" + role));
@@ -81,29 +81,32 @@ public class JwtTenantFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // Continue with the request
+            // Continue request
             filterChain.doFilter(request, response);
 
         } catch (ExpiredJwtException e) {
             logger.warn("Token expired for path: {}", request.getRequestURI());
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Token expired\"}");
+            unauthorized(response, "Token expired");
+
         } catch (JwtException e) {
             logger.warn("Invalid token for path {}: {}", request.getRequestURI(), e.getMessage());
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Invalid token\"}");
+            unauthorized(response, "Invalid token");
+
         } catch (Exception e) {
             logger.error("Authentication failed for path {}: {}", request.getRequestURI(), e.getMessage(), e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.setContentType("application/json");
             response.getWriter().write("{\"error\":\"Authentication failed\"}");
+
         } finally {
-            // Clear context AFTER response is sent
             TenantContext.clear();
             SecurityContextHolder.clearContext();
         }
+    }
 
+    private void unauthorized(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"error\":\"" + message + "\"}");
     }
 }
