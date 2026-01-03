@@ -1,8 +1,6 @@
-
 package om.tanish.saas.user;
 
 import jakarta.validation.Valid;
-import om.tanish.saas.tenant.TenantContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -20,62 +18,71 @@ public class UserController {
         this.userService = userService;
     }
 
-    // ----------------CREATE--------------------
+    // =====================================================
+    // REGISTER TENANT ADMIN (SUPER_ADMIN)
+    // =====================================================
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @PostMapping("/register/{tenantKey}")
-    public UserDTO register(
-            @RequestParam String tenantKey,
-            @RequestBody CreateUserRequest request
-    ) {
-        User user = userService.register(tenantKey, request);
-        return new UserDTO(user);
-    }
-
-    @PreAuthorize("hasRole('TENANT_ADMIN')")
-    @PostMapping
+    @PostMapping("/register-tenant-admin/{tenantKey}")
     @ResponseStatus(HttpStatus.CREATED)
-    public User createUser(@Valid @RequestBody CreateUserRequest request) {
-        return userService.createUser(request);
+    public UserDTO registerTenantAdmin(
+            @PathVariable String tenantKey,
+            @Valid @RequestBody CreateUserRequest request
+    ) {
+        return new UserDTO(userService.registerTenantAdmin(tenantKey, request));
     }
 
-    // --------------------Retrieve------------------------
-    @PreAuthorize("hasRole('TENANT_ADMIN')")
+    // =====================================================
+    // GET ALL USERS
+    // SUPER_ADMIN → global
+    // TENANT_ADMIN → tenant
+    // =====================================================
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','TENANT_ADMIN')")
     @GetMapping
     public List<UserDTO> getAllUsers() {
-        return userService.getAllUsers().stream()
+        return userService.getAllUsers()
+                .stream()
                 .map(UserDTO::new)
                 .toList();
     }
+
+    // =====================================================
+
+    // =====================================================
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','TENANT_ADMIN','USER')")
     @GetMapping("/{id}")
-    @PreAuthorize("!hasRole('SUPER_ADMIN')")
-    public UserDTO getUserById(@PathVariable UUID id){
-        User user = userService.getUserById(id);
-        return new UserDTO(user);
+    public UserDTO getUserById(@PathVariable UUID id) {
+        return new UserDTO(userService.getUserById(id));
     }
 
-    // ---------------------UPDATE-------------------
+    // =====================================================
+    // CREATE USER (TENANT_ADMIN)
+    // =====================================================
+    @PreAuthorize("hasRole('TENANT_ADMIN')")
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserDTO createUser(@Valid @RequestBody CreateUserRequest request) {
+        return new UserDTO(userService.createUser(request));
+    }
+
+    // =====================================================
+    // UPDATE USER (TENANT_ADMIN)
+    // =====================================================
     @PreAuthorize("hasRole('TENANT_ADMIN')")
     @PutMapping("/{id}")
     public UserDTO updateUser(
             @PathVariable UUID id,
-            @Valid @RequestBody CreateUserRequest request) {
-        User updateUser = userService.updateUser(id, request);
-
-        return new UserDTO(updateUser);
+            @Valid @RequestBody CreateUserRequest request
+    ) {
+        return new UserDTO(userService.updateUser(id, request));
     }
 
-    // -----------------DELETE---------------------------
+    // =====================================================
+    // DELETE USER (TENANT_ADMIN)
+    // =====================================================
     @PreAuthorize("hasRole('TENANT_ADMIN')")
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable UUID id){
+    public void deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
-    }
-
-    //Debug
-    @GetMapping("/debug/context")
-    public String debugContext() {
-        UUID tenantId = TenantContext.getTenant();
-        return "Current Tenant Context: " + (tenantId != null ? tenantId : "NOT SET");
     }
 }

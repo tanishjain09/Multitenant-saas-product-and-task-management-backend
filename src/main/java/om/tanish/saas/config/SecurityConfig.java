@@ -52,12 +52,22 @@ public class SecurityConfig {
                         .frameOptions(frame -> frame.disable())
                 )
                 .authorizeHttpRequests(auth -> auth
+
+                        // -------- PUBLIC --------
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/user/create", "/api/v1/user/new").permitAll()
-                        .requestMatchers("/api/v1/tenant/create").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/ping").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
+
+                        // -------- SUPER ADMIN ONLY --------
+                        .requestMatchers("/api/v1/tenant/create","/api/v1/user/create")
+                        .hasRole("SUPER_ADMIN")
+
+                        // -------- TENANT ADMIN ONLY --------
+                        .requestMatchers( "/api/v1/user/new")
+                        .hasRole("TENANT_ADMIN")
+
+                        // -------- ALL OTHER APIs --------
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtTenantFilter, UsernamePasswordAuthenticationFilter.class)

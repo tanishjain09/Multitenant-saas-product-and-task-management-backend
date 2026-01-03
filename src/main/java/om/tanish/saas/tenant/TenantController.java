@@ -9,59 +9,54 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 import static org.springframework.security.authorization.AuthorityReactiveAuthorizationManager.hasRole;
-
 @PreAuthorize("hasRole('SUPER_ADMIN')")
 @RestController
 @RequestMapping("/api/v1/tenants")
 public class TenantController {
 
-    @Autowired
-    private TenantService tenantService;
+    private final TenantService tenantService;
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public TenantController(TenantService tenantService) {
+        this.tenantService = tenantService;
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TenantDTO createTenant(@Valid @RequestBody CreateTenantRequest request) {
-        Tenant savedTenant = tenantService.createTenant(request);
-        return new TenantDTO(savedTenant);
+        return new TenantDTO(tenantService.createTenant(request));
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @GetMapping("/getAll")
+    @GetMapping
     public List<TenantDTO> getAllTenants() {
-        return tenantService.findAll().stream()
+        return tenantService.findAll()
+                .stream()
                 .map(TenantDTO::new)
                 .toList();
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @GetMapping("/{key}")
     public TenantDTO getTenantByKey(@PathVariable String key) {
-        Tenant tenant = tenantService.getTenantByKey(key);
-        return new TenantDTO(tenant);
+        return new TenantDTO(tenantService.getTenantByKey(key));
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PutMapping("/{key}")
     public TenantDTO updateTenant(
             @PathVariable String key,
-            @RequestBody CreateTenantRequest request
+            @Valid @RequestBody CreateTenantRequest request
     ) {
-        Tenant updatedTenant = tenantService.updateTenant(key, request);
-        return new TenantDTO(updatedTenant);
+        return new TenantDTO(tenantService.updateTenant(key, request));
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PutMapping("/{key}/status")
     public TenantDTO updateTenantStatus(
             @PathVariable String key,
-            @RequestBody UpdateTenantStatusRequest request) {
-        Tenant tenant = tenantService.updateTenantStatus(key, request);
-        return new TenantDTO(tenant);
+            @Valid @RequestBody UpdateTenantStatusRequest request
+    ) {
+        return new TenantDTO(tenantService.updateTenantStatus(key, request));
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @DeleteMapping("/{key}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteTenant(@PathVariable String key) {
         tenantService.deleteTenant(key);
     }

@@ -5,14 +5,15 @@ import om.tanish.saas.tenant.Tenant;
 import om.tanish.saas.tenant.TenantContext;
 import om.tanish.saas.tenant.TenantRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.file.AccessDeniedException;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-
 @Service
 public class UserService {
 
@@ -20,145 +21,219 @@ public class UserService {
     private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
 
-
-
-
-    public UserService(UserRepository userRepository,
-                       TenantRepository tenantRepository, PasswordEncoder passwordEncoder) {
+    public UserService(
+            UserRepository userRepository,
+            TenantRepository tenantRepository,
+            PasswordEncoder passwordEncoder
+    ) {
         this.userRepository = userRepository;
         this.tenantRepository = tenantRepository;
         this.passwordEncoder = passwordEncoder;
     }
+
+    // =====================================================
+    // SUPER_ADMIN → REGISTER TENANT ADMIN
+    // =====================================================
     @Transactional
-    public User register(String tenantKey, CreateUserRequest request) {
+    public User registerTenantAdmin(String tenantKey, CreateUserRequest request) {
 
-        Tenant tenant = tenantRepository
-                .findByTenantKey(tenantKey)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST, "Tenant not found"
-                ));
+        if (!UserRole.TENANT_ADMIN.name().equalsIgnoreCase(request.getRole())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "SUPER_ADMIN can only create TENANT_ADMIN"
+            );
+        }
 
-        return createUserInternal(tenant, request);
+        Tenant tenant = tenantRepository.findByTenantKey(tenantKey)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST, "Tenant not found"));
+
+        return createUserInternal(tenant, request, UserRole.TENANT_ADMIN);
     }
 
+    // =====================================================
+    // GET ALL USERS
+    // =====================================================
+    public List<User> getAllUsers() {
+
+        UserRole role = getCurrentRole();
+
+        if (role == UserRole.SUPER_ADMIN) {
+            return userRepository.findAll();
+        }
+
+        UUID tenantId = requireTenant();
+        return userRepository.findAllByTenant_Id(tenantId);
+    }
+
+    // =====================================================
+    // GET USER BY ID
+    // =====================================================
+    public User getUserById(UUID id) {
+
+        UserRole role = getCurrentRole();
+
+        if (role == UserRole.SUPER_ADMIN) {
+            return userRepository.findById(id)
+                    .orElseThrow(() ->
+                            new ResponseStatusException(
+                                    HttpStatus.NOT_FOUND, "User not found"));
+        }
+
+        UUID tenantId = requireTenant();
+        User user = userRepository.findByIdAndTenant_Id(id, tenantId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND, "User not found"));
+
+        if (role == UserRole.USER) {
+            UUID currentUserId = getCurrentUserId();
+            if (!user.getId().equals(currentUserId)) {
+                throw new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Users can access only their own data");
+            }
+        }
+
+        return user;
+    }
+
+    // =====================================================
+    // TENANT_ADMIN → CREATE USER
+    // =====================================================
     @Transactional
     public User createUser(CreateUserRequest request) {
 
-        System.out.println("calling this method");
-        UUID tenantId = TenantContext.getTenant();
-        UserRole role = UserRole.valueOf(request.getRole().trim().toUpperCase());
-
-        if(role == UserRole.SUPER_ADMIN){
-            if(tenantId != null){
-                throw new IllegalStateException(
-                        "SUPER_ADMIN must not be associated with a tenant"
-                );
-            }
-        }else{
-            if(tenantId == null){
-                throw new IllegalStateException(
-                        "SUPER_ADMIN must not be associated with a tenant"
-                );
-            }
-        }
-        if (tenantId == null) {
+        if (!UserRole.USER.name().equalsIgnoreCase(request.getRole())) {
             throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED, "Tenant context missing"
+                    HttpStatus.FORBIDDEN,
+                    "TENANT_ADMIN can only create USER"
             );
         }
-        Tenant tenant = tenantRepository
-                .findById(tenantId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST, "Tenant not found"
-                ));
 
-        return createUserInternal(tenant, request);
+        UUID tenantId = requireTenant();
+
+        Tenant tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST, "Tenant not found"));
+
+        return createUserInternal(tenant, request, UserRole.USER);
     }
-    private User createUserInternal(Tenant tenant, CreateUserRequest request){
+
+    // =====================================================
+    // UPDATE USER
+    // =====================================================
+    @Transactional
+    public User updateUser(UUID userId, CreateUserRequest request)  {
+
+        UUID tenantId = requireTenant();
+
+        User user = userRepository.findByIdAndTenant_Id(userId, tenantId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND, "User not found"));
+
+        if (request.getUsername() != null) user.setUsername(request.getUsername());
+        if (request.getEmail() != null) user.setEmail(request.getEmail());
+
+        if (request.getRole() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "Role change is not allowed");
+        }
+
+        return userRepository.save(user);
+    }
+
+    // =====================================================
+    // DELETE USER
+    // =====================================================
+    @Transactional
+    public void deleteUser(UUID id) {
+
+        UUID tenantId = requireTenant();
+
+        User user = userRepository.findByIdAndTenant_Id(id, tenantId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND, "User not found"));
+
+        userRepository.delete(user);
+    }
+
+    // =====================================================
+    // INTERNAL HELPERS
+    // =====================================================
+    private User createUserInternal(
+            Tenant tenant,
+            CreateUserRequest request,
+            UserRole role
+    ) {
 
         if (userRepository.existsByTenantAndEmail(tenant, request.getEmail())) {
             throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "Email already exists in this tenant"
-            );
+                    HttpStatus.CONFLICT, "Email already exists in tenant");
         }
 
         if (userRepository.existsByTenantAndUsername(tenant, request.getUsername())) {
             throw new ResponseStatusException(
-                    HttpStatus.CONFLICT, "Username already exists in this tenant"
-            );
+                    HttpStatus.CONFLICT, "Username already exists in tenant");
         }
 
+        validatePassword(request.getPassword());
 
         User user = new User();
         user.setTenant(tenant);
         user.setEmail(request.getEmail());
-        validatePassword(request.getPassword());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setUsername(request.getUsername());
-        user.setRole(request.getRole());
+        user.setRole(String.valueOf(role));
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setCreatedAt(Instant.now());
 
         return userRepository.save(user);
     }
 
-    public List<User> getAllUsers() {
-
-        return userRepository.findAll();
-    }
-
-    public User getUserById(UUID id){
-        return userRepository.findByIdAndTenant_Id(id, TenantContext.getTenant())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST, "Cannot get user by id"
-                ));
-
-    }
-    @Transactional
-    public User updateUser(UUID  userId, CreateUserRequest request){
+    private UUID requireTenant() {
         UUID tenantId = TenantContext.getTenant();
-
-        User user = userRepository.findByIdAndTenant_Id(userId, tenantId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST, "Cannot get user by get"
-                ));
-        if(request.getUsername() != null){
-            user.setUsername(request.getUsername());
+        if (tenantId == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED, "Tenant context missing");
         }
-        if(request.getEmail() != null){
-            user.setEmail(request.getEmail());
-        }
-        if (request.getRole() != null) {
-            user.setRole(request.getRole());
-        }
-        return userRepository.save(user);
+        return tenantId;
     }
 
-    @Transactional
-    public void deleteUser(UUID id){
-        UUID tenantId = TenantContext.getTenant();
-         User user = userRepository.findById(id)
-                 .orElseThrow(() -> new ResponseStatusException(
-                         HttpStatus.NOT_FOUND, "User not found"
-                 ));
-         userRepository.deleteByIdAndTenant_Id(id, tenantId);
+    private UUID getCurrentUserId() {
+        return (UUID) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
     }
 
-    private void validatePassword(String password){
-        if(password.length() < 8){
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Password must be at least 8 characters");
-        }
-        if (!password.matches(".*[A-Z].*")) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Password must contain at least one uppercase letter");
-        }
-        if (!password.matches(".*[a-z].*")) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Password must contain at least one lowercase letter");
-        }
-        if (!password.matches(".*\\d.*")) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Password must contain at least one digit");
-        }
+    private UserRole getCurrentRole() {
+        return SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getAuthorities()
+                .stream()
+                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .map(UserRole::valueOf)
+                .findFirst()
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND, "Role not found"
+                        ));
+    }
+
+    private void validatePassword(String password) {
+        if (password.length() < 8)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Password must be at least 8 characters");
+        if (!password.matches(".*[A-Z].*"))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Password must contain uppercase letter");
+        if (!password.matches(".*[a-z].*"))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Password must contain lowercase letter");
+        if (!password.matches(".*\\d.*"))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Password must contain digit");
     }
 }
