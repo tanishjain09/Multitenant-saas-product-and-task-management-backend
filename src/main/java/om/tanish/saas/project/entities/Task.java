@@ -52,10 +52,10 @@ public class Task {
     @Column(name = "due_date")
     private Instant dueDate;
 
-    @Column(nullable = false)
+    @Column(name = "created_at")
     private Instant createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "create_at")
     private Instant updatedAt;
 
     // Getters and Setters

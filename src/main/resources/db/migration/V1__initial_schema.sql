@@ -10,7 +10,7 @@ CREATE TABLE tenants (
 -- Create users table
 CREATE TABLE users (
     id UUID PRIMARY KEY,
-    tenant_id UUID NOT NULL,
+    tenant_id UUID,
     email VARCHAR(255) NOT NULL,
     username VARCHAR(50) NOT NULL,
     password VARCHAR(255) NOT NULL,

@@ -42,10 +42,10 @@ public class Project {
     @Column(name = "end_date")
     private Instant endDate;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "created_at")
     private Instant createdAt;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "updated_at")
     private Instant updatedAt;
 
     // Getters and Setters

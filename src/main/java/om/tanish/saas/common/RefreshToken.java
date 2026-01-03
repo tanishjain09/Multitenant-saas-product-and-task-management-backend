@@ -1,6 +1,7 @@
 package om.tanish.saas.common;
 
 import jakarta.persistence.*;
+import om.tanish.saas.tenant.Tenant;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -18,6 +19,10 @@ public class RefreshToken {
     @Column(nullable = false)
     private UUID userId;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
+
     @Column(nullable = false)
     private Instant expiryDate;
 
@@ -34,4 +39,10 @@ public class RefreshToken {
     public void setExpiryDate(Instant expiryDate) { this.expiryDate = expiryDate; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public Tenant getTenant() {
+        return tenant;
+    }
+    public void setTenant(Tenant tenant) {
+        this.tenant = tenant;
+    }
 }

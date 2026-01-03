@@ -3,7 +3,6 @@ package om.tanish.saas.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import om.tanish.saas.common.AuditableEntity;
 import om.tanish.saas.tenant.Tenant;
 
 import java.time.Instant;
@@ -17,7 +16,7 @@ import java.util.UUID;
                 @UniqueConstraint(columnNames = {"tenant_id", "username"})
         }
 )
-public class User extends AuditableEntity {
+public class User {
     @Id
     @GeneratedValue
     private UUID id;
@@ -41,48 +40,55 @@ public class User extends AuditableEntity {
     @Column(nullable = false)
     private UserRole role;
 
+    @Column(nullable = false,name = "created_at")
+    private Instant createdAt;
+
     public UUID getId() {
         return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
     }
 
     public Tenant getTenant() {
         return tenant;
     }
 
-    public void setTenant(Tenant tenant) {
-        this.tenant = tenant;
-    }
-
     public String getEmail() {
         return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email != null ? email.trim().toLowerCase() : null;
     }
 
     public String getUsername() {
         return username;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     public String getPassword() {
         return password;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
     public UserRole getRole() {
         return role;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public void setTenant(Tenant tenant) {
+        this.tenant = tenant;
+    }
+
+    public void setEmail(String email) {
+        this.email = email != null ? email.trim().toLowerCase() : null;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public void setRole(String role) {
@@ -91,5 +97,9 @@ public class User extends AuditableEntity {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid role: " + role);
         }
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }

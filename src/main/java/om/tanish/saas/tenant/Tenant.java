@@ -3,7 +3,6 @@ package om.tanish.saas.tenant;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import om.tanish.saas.common.AuditableEntity;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -11,7 +10,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "tenants",
         uniqueConstraints = {@UniqueConstraint(columnNames = "tenant_key")})
-public class Tenant extends AuditableEntity {
+public class Tenant{
 
     @Id
     @GeneratedValue
@@ -30,6 +29,8 @@ public class Tenant extends AuditableEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TenantStatus status;
+
+    private Instant createdAt;
 
     public UUID getId() {
         return id;
@@ -63,5 +64,12 @@ public class Tenant extends AuditableEntity {
         this.status = status;
     }
 
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
 
 }
