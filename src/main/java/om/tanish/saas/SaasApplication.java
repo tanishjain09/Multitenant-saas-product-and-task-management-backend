@@ -1,5 +1,6 @@
 package om.tanish.saas;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -10,3 +11,4 @@ public class SaasApplication {
 		SpringApplication.run(SaasApplication.class, args);
 	}
 }
+
